@@ -22,6 +22,13 @@ public class HelloWorldModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void helloWorld(Promise promise) {
         try {
+            MyVector[] vectors = {new MyVector(1, 1), new MyVector(2, 2), new MyVector(3, 3)};
+            MyStruct myStruct = new MyStruct(
+                    3,
+                    vectors,
+                    new MyVector(10, 15));
+            MyStruct newStruct = helloStructJNI(myStruct, 47);
+
             String hello = helloWorldJNI();
             promise.resolve(hello);
         } catch (Exception e) {
@@ -30,4 +37,6 @@ public class HelloWorldModule extends ReactContextBaseJavaModule {
     }
 
     public native String helloWorldJNI();
+
+    public native MyStruct helloStructJNI(MyStruct struct, double d);
 }
