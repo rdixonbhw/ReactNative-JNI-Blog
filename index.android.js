@@ -16,7 +16,28 @@ import HelloWorld from './HelloWorld';
 class blogRnJni extends Component {
 	async helloWorld() {
 		try {
-			let helloWorldStr = await HelloWorld.helloWorld();
+			let struct = {
+				vector_count: 3,
+				vectors: [
+					{
+						x: 10,
+						y: 10,
+					},
+					{
+						x: 20,
+						y: 20,
+					},
+					{
+						x: 30,
+						y: 30,
+					},
+				],
+				position: {
+					x: 12,
+					y: 34,
+				}
+			};
+			let helloWorldStr = await HelloWorld.helloWorld(struct, -3.14);
 			console.log(helloWorldStr);
 		} catch (e) {
 			console.error(e);

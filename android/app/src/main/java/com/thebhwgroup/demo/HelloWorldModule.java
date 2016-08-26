@@ -4,6 +4,7 @@ import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.ReadableMap;
 
 public class HelloWorldModule extends ReactContextBaseJavaModule {
     static {
@@ -20,17 +21,11 @@ public class HelloWorldModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void helloWorld(Promise promise) {
+    public void helloWorld(ReadableMap structMap, double num, Promise promise) {
         try {
-            MyVector[] vectors = {new MyVector(1, 1), new MyVector(2, 2), new MyVector(3, 3)};
-            MyStruct myStruct = new MyStruct(
-                    3,
-                    vectors,
-                    new MyVector(10, 15));
-            MyStruct newStruct = helloStructJNI(myStruct, 47);
-
-            String hello = helloWorldJNI();
-            promise.resolve(hello);
+            MyStruct myStruct = new MyStruct(structMap);
+            MyStruct newStruct = helloStructJNI(myStruct, num);
+            promise.resolve(newStruct.toWritableMap());
         } catch (Exception e) {
             promise.reject("ERR", e);
         }

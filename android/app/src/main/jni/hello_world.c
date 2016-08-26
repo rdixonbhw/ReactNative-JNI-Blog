@@ -74,17 +74,37 @@ MyVector make_native_my_vector(JNIEnv *env, jobject jvector) {
 MyStruct make_native_my_struct(JNIEnv *env, jobject jstruct) {
     MyStruct my_struct;
 
-    my_struct.vector_count = (*env)->GetIntField(env, jstruct, MY_STRUCT_VECTOR_COUNT);
-    my_struct.position = make_native_my_vector(env, (*env)->GetObjectField(env, jstruct,
-                                                                           MY_STRUCT_POSITION));
+    my_struct.vector_count = (*env)->GetIntField( //gets an int from a jobject field
+            env, //current JNI interface pointer
+            jstruct, //the jobject (MyStruct) we're getting the field from
+            MY_STRUCT_VECTOR_COUNT //the jfieldID for "vector_count"
+    );
+    my_struct.position = make_native_my_vector( //function we have to make MyVector from jobject
+            env, //current JNI interface pointer
+            (*env)->GetObjectField( //gets jobject from a jobject field
+                    env, //current JNI interface pointer
+                    jstruct, //jobject we're getting the jobject from
+                    MY_STRUCT_POSITION //jfieldID for "position"
+            ));
 
+    //Allocate vectors
     my_struct.vectors = (MyVector *) malloc(sizeof(MyVector) * my_struct.vector_count);
-    jobject jvectors = (*env)->GetObjectField(env, jstruct, MY_STRUCT_VECTORS);
-    jobjectArray *ja_vectors = (jobjectArray *) (&jvectors);
-    for (int i = 0; i < my_struct.vector_count; ++i) {
-        my_struct.vectors[i] = make_native_my_vector(env,
-                                                     (*env)->GetObjectArrayElement(env, *ja_vectors,
-                                                                                   i));
+    jobjectArray jvectors = (*env)->GetObjectField( //get jobject from a jobject field
+            env, //current JNI interface pointer
+            jstruct, //jobject from which we're getting the jobject
+            MY_STRUCT_VECTORS //jfieldID for "vectors"
+    );
+    for (int i = 0; i < my_struct.vector_count; ++i) { //copy objects from jobjectArray to C array
+        jobject jvec = (*env)->GetObjectArrayElement( //get jobject from jobjectArray
+                env, //current JNI interface pointer
+                jvectors, //jobjectArray to get jobject from
+                i //index of jobject
+        );
+        my_struct.vectors[i] = make_native_my_vector( //function we have to make MyVector from jobject
+                env, //current JNI interface pointer
+                jvec //jobject to make MyVector from
+        );
+        (*env)->DeleteLocalRef(env, jvec); // DON'T FORGET THIS essentially a free() call but for a JNI local reference
     }
 
     return my_struct;
@@ -97,25 +117,31 @@ jobject make_jni_my_vector(JNIEnv *env, MyVector vector) {
 
 //Take a MyStruct and returns a jobject
 jobject make_jni_my_struct(JNIEnv *env, MyStruct my_struct) {
-    jobjectArray ja_vectors = (*env)->NewObjectArray(
+    jobjectArray ja_vectors = (*env)->NewObjectArray( //make new jobjectArray
             env,
-            my_struct.vector_count,
-            MY_VECTOR,
-            (*env)->NewObject(
-                    env,
-                    MY_VECTOR,
-                    MY_VECTOR_CONS,
-                    0,
-                    0));
-    for (int i = 0; i < my_struct.vector_count; ++i) {
-        (*env)->SetObjectArrayElement(env, ja_vectors, i,
-                                      (*env)->NewObject(env, MY_VECTOR, MY_VECTOR_CONS,
-                                                        my_struct.vectors[i].x,
-                                                        my_struct.vectors[i].y));
+            my_struct.vector_count, //size of array
+            MY_VECTOR, //type of array, jclass of MyVector
+            NULL //initial elements of jobjectArray
+    );
+    for (int i = 0; i < my_struct.vector_count; ++i) { //copy MyVector array into jobjectArray
+        (*env)->SetObjectArrayElement( //set element in jobjectArray
+                env,
+                ja_vectors, //jobjectArray in which to set element
+                i, //index to set
+                make_jni_my_vector(env, my_struct.vectors[i]) //element to set index to, helper function we have to make a jobject from a MyVector
+        );
     }
 
-    return (*env)->NewObject(env, MY_STRUCT, MY_STRUCT_CONS, my_struct.vector_count,
-                             ja_vectors, make_jni_my_vector(env, my_struct.position));
+    free(my_struct.vectors); //we assume we're done with the MyStruct at this point
+
+    return (*env)->NewObject( //make jobject given jclass, jmethodID of constructors, and parameters
+            env,
+            MY_STRUCT, //object type we're making, jclass for MyStruct
+            MY_STRUCT_CONS, //method used to make object, jmethodID of MyStruct constructor
+            my_struct.vector_count, //first parameter, an int of vector_count
+            ja_vectors, //second parameter, a jobjectArray of vectors
+            make_jni_my_vector(env, my_struct.position) //third parameter, a jobject of position
+    );
 }
 
 
