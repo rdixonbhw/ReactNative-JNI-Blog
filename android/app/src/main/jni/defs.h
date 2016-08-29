@@ -1,3 +1,6 @@
+#ifndef DEFS_H
+#define DEFS_H
+
 typedef struct
 {
     double x;
@@ -10,3 +13,5 @@ typedef struct
     MyVector* vectors;
     MyVector position;
 } MyStruct;
+
+#endif /* DEFS_H */
