@@ -1,4 +1,4 @@
-package com.thebhwgroup.demo; //copy the package nane in MainApplication.java
+package com.thebhwgroup.demo;
 
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
